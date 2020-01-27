@@ -30,7 +30,7 @@ module main;
 
 import std.stdio;
 import std.array : split;
-import std.file : readText, exists, mkdir, getcwd, write;
+import std.file : readText, exists, mkdir, getcwd, write, rmdirRecurse;
 import std.process : execute, Config;
 import std.json;
 import std.path : absolutePath;
@@ -77,7 +77,7 @@ struct Git
     }
 }
 
-void run()
+void run(bool clean)
 {
     string depJ = readText("dependencies.json");
     JSONValue dubConfig = parseJSON(depJ);
@@ -110,6 +110,11 @@ void run()
         writeln("Resolving ", depName, "@", branchName, " to ", "\"", dir, "\"...");
 
         string gitConfig = dir ~ "/.git/config";
+        if (clean)  {
+           tracef("Remove %s dir", dir);
+           dir.rmdirRecurse;
+           return;
+        }
 
         if (exists(gitConfig))
         {
@@ -161,8 +166,9 @@ void main(string[] args)
     import std.getopt;
 
     bool verbose;
+    bool clean;
 
-    auto opt = getopt(args, "verbose|v", "Verbose", &verbose);
+    auto opt = getopt(args, "verbose|v", "Verbose", &verbose, "clean|c", "Delete package directory", &clean);
     if (verbose)
     {
         globalLogLevel(LogLevel.trace);
@@ -178,10 +184,11 @@ void main(string[] args)
     }
     else
     {
-        run();
+        run(clean);
     }
 }
 
 void help()
 {
+
 }
